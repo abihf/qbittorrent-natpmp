@@ -51,9 +51,10 @@ func main() {
 	someRunning := len(torrents) == 0
 	for _, torrent := range torrents {
 		lastActivity := time.Unix(int64(torrent.LastActivity), 0)
-		if time.Since(lastActivity) < 1*time.Minute {
+		if torrent.State == "downloading" && time.Since(lastActivity) < 5*time.Minute{
 			slog.Info("found new download", "name", torrent.Name, "last_activity", lastActivity)
 			someRunning = true
+			break
 		} else if torrent.State == "stalledDL" || torrent.State == "metaDL" {
 			slog.Error("found stalled download", "name", torrent.Name, "progres", torrent.Progress)
 			peers, err := getTorrentPeers(torrent.Hash)
@@ -64,8 +65,7 @@ func main() {
 				someRunning = true
 			}
 		} else {
-			slog.Info("found running download", "name", torrent.Name, "state", torrent.State, "progress", torrent.Progress)
-			someRunning = true
+			slog.Info("found unknown", "name", torrent.Name, "state", torrent.State, "progress", torrent.Progress)
 		}
 	}
 	if !someRunning {
